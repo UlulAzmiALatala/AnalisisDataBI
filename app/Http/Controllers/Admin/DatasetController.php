@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Dataset;
 use Illuminate\Http\Request;
+use App\Imports\DatasetImport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class DatasetController extends Controller
 {
@@ -20,12 +22,22 @@ class DatasetController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'file' => 'required|file|mimes:csv,txt,xlsx|max:10240', // Maksimal 10MB untuk contoh
+            'file' => 'required|file|mimes:csv,txt,xlsx|max:10240',
         ]);
 
-        // Logika ETL dan Upload akan kita taruh di sini nanti
+        // 1. Buat record Dataset dengan status awal 'processing'
+        $dataset = Dataset::create([
+            'name' => $request->name,
+            'status' => 'processing',
+        ]);
 
-        return back()->with('success', 'Dataset berhasil ditambahkan dan sedang diproses.');
+        // 2. Simpan file fisik secara lokal sementara
+        $filePath = $request->file('file')->store('datasets');
+
+        // 3. Lemparkan tugas pembacaan file ke Background Job
+        Excel::import(new DatasetImport($dataset), $filePath);
+
+        return back()->with('success', 'Dataset berhasil diunggah dan sedang diproses di latar belakang.');
     }
 
     public function destroy(Dataset $dataset)

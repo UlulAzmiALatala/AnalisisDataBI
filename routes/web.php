@@ -3,11 +3,14 @@
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\Admin\DatasetController;
+use App\Http\Controllers\AnalyticsController;
 
 // 1. FRONTEND / USER (React + Inertia)
 Route::get('/', function () {
     return Inertia::render('Dashboard');
 });
+
+Route::get('/analytics/{dataset}', [AnalyticsController::class, 'show'])->name('analytics.show');
 
 // 2. ADMIN PANEL (Blade + Alpine)
 Route::prefix('admin')->group(function () {
